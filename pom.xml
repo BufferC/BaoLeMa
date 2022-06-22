@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.fc</groupId>
     <artifactId>BaoLeMa</artifactId>
-    <version>0.1.1-SNAPSHOT</version>
+    <version>0.1.2-SNAPSHOT</version>
     <name>BaoLeMa</name>
     <description>BaoLeMa project for Spring Boot</description>
     <properties>

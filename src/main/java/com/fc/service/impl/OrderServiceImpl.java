@@ -201,7 +201,7 @@ public class OrderServiceImpl implements OrderService {
             // 如果当前状态被改为了3
             if (orders.getStatus().equals(3)) {
                 // 重新准备一个订单任务存入到队列中，超时时间为半个小时
-                DelayQueueManager.put(orders.getId(), orders.getStatus(), 1L);
+                DelayQueueManager.put(orders.getId(), orders.getStatus(), 30L);
             }
         }
 
@@ -213,7 +213,7 @@ public class OrderServiceImpl implements OrderService {
     public boolean save(Orders orders) {
         // 准备一个订单任务，超时时间为半个小时
         // 存入到队列中
-        DelayQueueManager.put(orders.getId(), orders.getStatus(), 1L);
+        DelayQueueManager.put(orders.getId(), orders.getStatus(), 30L);
 
         return orderDao.insert(orders) > 0;
     }

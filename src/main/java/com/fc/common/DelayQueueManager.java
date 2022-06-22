@@ -84,9 +84,9 @@ public class DelayQueueManager implements CommandLineRunner {
         // 获取数据库中当前还未完成的订单
         List<Orders> list = orderService.findUnfinishedOrders();
 
-        // 遍历后添加到队列中
+        // 遍历后添加到队列中，每个订单设置超时时间为半个小时
         for (Orders order : list) {
-            QUEUE.put(new CompleteOrderTask(new OrderTaskDto(order.getId(), order.getStatus()), 1));
+            QUEUE.put(new CompleteOrderTask(new OrderTaskDto(order.getId(), order.getStatus()), 30));
         }
 
         // 开启异步请求

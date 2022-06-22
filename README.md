@@ -13,7 +13,11 @@
 
 ## Change Log
 
-### v0.1.0
+### v0.1.2
+
+- 修复bug
+
+### v0.1.1
 
 - 完善`README.md` 
 - 使用`DelayQueue`处理超时订单

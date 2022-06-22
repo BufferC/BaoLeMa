@@ -25,4 +25,10 @@ public interface OrderService {
     boolean updateById(Orders orders);
 
     boolean save(Orders orders);
+
+    // 获取所有未付款和派送后的订单
+    List<Orders> findUnfinishedOrders();
+
+    // 用于清理30未付款以及派送后的订单状态修改
+    void asyncChangeOrderStatus() throws InterruptedException;
 }

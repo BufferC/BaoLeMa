@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fc.common.BaseContext;
+import com.fc.common.DelayQueueManager;
 import com.fc.dao.OrderDao;
+import com.fc.dto.OrderTaskDto;
 import com.fc.dto.OrdersDto;
 import com.fc.entity.*;
 import com.fc.exception.CustomException;
@@ -12,12 +14,15 @@ import com.fc.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.DelayQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -162,6 +167,7 @@ public class OrderServiceImpl implements OrderService {
         return pageDto;
     }
 
+    // 再来一单
     @Override
     public boolean addShoppingCartAgain(Long id) {
         List<OrderDetail> orderDetails = orderDetailService.findByOrderId(id);
@@ -187,11 +193,79 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public boolean updateById(Orders orders) {
+        // 移除队列中指定id的订单
+        boolean removed = DelayQueueManager.remove(orders.getId());
+
+        // 如果移除成功
+        if (removed) {
+            // 如果当前状态被改为了3
+            if (orders.getStatus().equals(3)) {
+                // 重新准备一个订单任务存入到队列中，超时时间为半个小时
+                DelayQueueManager.put(orders.getId(), orders.getStatus(), 1L);
+            }
+        }
+
+        // 更新数据库
         return orderDao.updateById(orders) > 0;
     }
 
     @Override
     public boolean save(Orders orders) {
+        // 准备一个订单任务，超时时间为半个小时
+        // 存入到队列中
+        DelayQueueManager.put(orders.getId(), orders.getStatus(), 1L);
+
         return orderDao.insert(orders) > 0;
+    }
+
+    // 获取未完成的订单
+    @Override
+    public List<Orders> findUnfinishedOrders() {
+        LambdaQueryWrapper<Orders> wrapper = new LambdaQueryWrapper<>();
+
+        wrapper.eq(Orders::getStatus, 1)
+                .or()
+                .eq(Orders::getStatus, 3);
+
+        return orderDao.selectList(wrapper);
+    }
+
+    // 异步处理超时订单
+    @Async
+    public void asyncChangeOrderStatus() throws InterruptedException {
+        // 获取延时队列
+        DelayQueue<DelayQueueManager.CompleteOrderTask> queue = DelayQueueManager.getQUEUE();
+
+        while (true) {
+            try {
+                DelayQueueManager.CompleteOrderTask orderTask = queue.take();
+                System.out.println("开始处理超时订单：" + orderTask);
+
+                // 获取队列中的订单
+                OrderTaskDto orderTaskDto = orderTask.getOrderTaskDto();
+
+                // 获取数据库中最新的订单
+                Orders newOrders = orderDao.selectById(orderTaskDto.getId());
+
+                // 如果订单的状态还未发生改变
+                if (newOrders.getStatus().equals(orderTaskDto.getStatus())) {
+                    // 未付款的订单
+                    if (newOrders.getStatus().equals(1)) {
+                        // 修改状态为已取消
+                        newOrders.setStatus(5);
+                        // 派送完成未确定的订单
+                    } else if (newOrders.getStatus().equals(3)) {
+                        // 修改状态为已确认
+                        newOrders.setStatus(4);
+                    }
+
+                    // 更新数据库
+                    orderDao.updateById(newOrders);
+                }
+            } catch (InterruptedException e) {
+                System.out.println("超时订单队列出现异常");
+                break;
+            }
+        }
     }
 }

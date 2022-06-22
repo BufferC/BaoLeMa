@@ -1,3 +1,13 @@
+<div>
+    <img src="https://img.shields.io/badge/Author-BufferC-red" float="left">
+    <img src="https://img.shields.io/github/last-commit/BufferC/BaoLeMa" float="left"/>
+    <img src="https://img.shields.io/github/issues-raw/BufferC/BaoLeMa" float="left"/>
+    <img src="https://img.shields.io/github/issues-pr/BufferC/BaoLeMa" float="left"/>
+    <img src="https://img.shields.io/github/license/BufferC/BaoLeMa" float="left"/>
+</div>
+
+
+
 - [Background](#background)
 - [Change Log](#change-log)
   - [v0.1.0](#v010)
@@ -53,6 +63,8 @@ Shiro 权限管理（待优化）
 微信小程序（待优化）
 
 ## Reports
+
+![BufferC's GitHub stats](https://github-readme-stats.vercel.app/api?username=BufferC&show_icons=true)
 
 <div align="center">  
   <img src="https://github-readme-streak-stats.herokuapp.com?user=BufferC&theme=onedark&date_format=M%20j%5B%2C%20Y%5D" />
